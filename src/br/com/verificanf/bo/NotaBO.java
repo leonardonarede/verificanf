@@ -12,6 +12,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -25,13 +26,14 @@ import org.apache.commons.mail.SimpleEmail;
 public class NotaBO {
     private List<Nota> ultimasAtual;
     private List<Nota> ultimasAnterior;
+    private List<Nota> naoEncontradas;
     private String hostEmail = "";
     private String portEmail = "";
     private String userEmail = "";
     private String passEmail = "";
     private String fromEmail = "";
     private String toEmail = "";
-    
+    private String msg = "Salto da numeração favor verificar - \n";
     
     public void buscar(){
         /*Inicio - Pegar Configurações de email do arquivo*/
@@ -90,7 +92,7 @@ public class NotaBO {
         try {
             ultimasAtual = notaDAO.getUltimaNotaMesAtual();
             ultimasAnterior = notaDAO.getUltimaNotaMesAnterior();
-            
+            naoEncontradas = new ArrayList<>();
             for(Nota notaAnterior : ultimasAnterior){
                 
                 for(Nota notaAtual : ultimasAtual){
@@ -109,21 +111,26 @@ public class NotaBO {
                             //System.out.println("Corrente Loja: "+notacorrente.getLoja()+" Nota: "+notacorrente.getNumero());
                            if(!notaDAO.notaIsValida(notacorrente)){
                                 System.out.println("Loja "+notaAnterior.getLoja()+" Numero: "+numero);
-                                Email email = new SimpleEmail();
-                                email.setHostName(hostEmail);
-                                email.setSmtpPort(Integer.parseInt(portEmail));
-                                email.setAuthentication(userEmail, passEmail);
-                                email.setFrom(fromEmail);
-                                email.setSubject("Alerta Nerus!!");
-                                email.setMsg("Salto da numeração favor verificar - Loja: "+notacorrente.getLoja()+" Nota: "+notacorrente.getNumero()+" Serie: "+notacorrente.getSerie());
-           
-                                email.addTo(toEmail);
-                                email.send();
+                                naoEncontradas.add(notacorrente);
+                                msg=msg.concat("      Loja: "+notacorrente.getLoja()+" Nota: "+notacorrente.getNumero()+" Serie: "+notacorrente.getSerie()+" \n");
                            }
+                        
                         }
                     }
                 }    
             }
+               if(naoEncontradas.size() > 0){
+                    Email email = new SimpleEmail();
+                    email.setHostName(hostEmail);
+                    email.setSmtpPort(Integer.parseInt(portEmail));
+                    email.setAuthentication(userEmail, passEmail);
+                    email.setFrom(fromEmail);
+                    email.setSubject("Alerta Nerus!!");
+                    email.setMsg(msg);
+
+                    email.addTo(toEmail);
+                    email.send();
+               }
         } catch (Exception ex) {
             Logger.getLogger(NotaBO.class.getName()).log(Level.SEVERE, null, ex);
         } 
