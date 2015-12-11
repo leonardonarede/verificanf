@@ -1,0 +1,4 @@
+Host:192.168.101.15
+DB:sqldados
+User:root
+Pass:
