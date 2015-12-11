@@ -7,9 +7,16 @@ package br.com.verificanf.bo;
 
 import br.com.verificanf.dao.NotaDAO;
 import br.com.verificanf.modelo.Nota;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.apache.commons.mail.Email;
+import org.apache.commons.mail.SimpleEmail;
 
 /**
  *
@@ -18,7 +25,67 @@ import java.util.logging.Logger;
 public class NotaBO {
     private List<Nota> ultimasAtual;
     private List<Nota> ultimasAnterior;
+    private String hostEmail = "";
+    private String portEmail = "";
+    private String userEmail = "";
+    private String passEmail = "";
+    private String fromEmail = "";
+    private String toEmail = "";
+    
+    
     public void buscar(){
+        /*Inicio - Pegar Configurações de email do arquivo*/
+          try {
+          String local = new File("./email.txt").getCanonicalFile().toString();
+          File arq = new File(local);
+          boolean existe = arq.exists();        
+              if (existe){
+                  FileReader fr = new FileReader( arq );
+                  BufferedReader br = new BufferedReader( fr );
+                  while(br.ready()){
+                      String linha = br.readLine();
+                      if(linha.contains("host:")){
+                          hostEmail = linha.replace("host:", "").replace(" ", "");
+                      }
+                      if(linha.contains("port:")){
+                          portEmail = linha.replace("port:", "").replace(" ", "");
+                      }
+                      if(linha.contains("user:")){
+                          userEmail = linha.replace("user:", "").replace(" ", "");
+                      }
+                      if(linha.contains("pass:")){
+                          passEmail = linha.replace("pass:", "").replace(" ", "");
+                      }
+                      if(linha.contains("from:")){
+                          fromEmail = linha.replace("from:", "").replace(" ", "");
+                      }
+                      if(linha.contains("to:")){
+                          toEmail = linha.replace("to:", "").replace(" ", "");
+                      }
+                  }
+
+              } 
+           } catch (FileNotFoundException ex) {
+                  Logger.getLogger(NotaBO.class.getName()).log(Level.SEVERE, null, ex);
+                  StackTraceElement st[] = ex.getStackTrace();
+                  String erro = "";
+                  for (int i = 0;i < st.length;i++){
+                      erro += st[i].toString() + "\n";
+                  } 
+                  
+           } catch (IOException ex) {
+                  Logger.getLogger(NotaBO.class.getName()).log(Level.SEVERE, null, ex);
+                  StackTraceElement st[] = ex.getStackTrace();
+                  String erro2 = "";
+                  for (int i = 0;i < st.length;i++){
+                      erro2 += st[i].toString() + "\n";
+                  } 
+                  
+          }
+          /*FIM - Pegar Configurações de email do arquivo*/
+        
+        
+        
         NotaDAO notaDAO = new NotaDAO();
         try {
             ultimasAtual = notaDAO.getUltimaNotaMesAtual();
@@ -41,7 +108,17 @@ public class NotaBO {
                             
                             //System.out.println("Corrente Loja: "+notacorrente.getLoja()+" Nota: "+notacorrente.getNumero());
                            if(!notaDAO.notaIsValida(notacorrente)){
-                                System.out.println("Loja "+notaAnterior.getLoja()+" Numero: "+numero); 
+                                System.out.println("Loja "+notaAnterior.getLoja()+" Numero: "+numero);
+                                Email email = new SimpleEmail();
+                                email.setHostName(hostEmail);
+                                email.setSmtpPort(Integer.parseInt(portEmail));
+                                email.setAuthentication(userEmail, passEmail);
+                                email.setFrom(fromEmail);
+                                email.setSubject("Alerta Nerus!!");
+                                email.setMsg("Salto da numeração favor verificar - Loja: "+notacorrente.getLoja()+" Nota: "+notacorrente.getNumero()+" Serie: "+notacorrente.getSerie());
+           
+                                email.addTo(toEmail);
+                                email.send();
                            }
                         }
                     }
