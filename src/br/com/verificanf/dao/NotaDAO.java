@@ -113,7 +113,7 @@ public class NotaDAO {
                     "AND   (nf.nfse LIKE '01') " +
                     "UNION ALL " +
                     "SELECT inv.storeno Lj " +
-                    "     , MAX(ROUND(inv.nfname)) Nota " +
+                    "     , ROUND(inv.nfname) Nota " +
                     "     , inv.invse Se " +
                     "     , 'Entrada' Tipo " +
                     "FROM  sqldados.inv " +
